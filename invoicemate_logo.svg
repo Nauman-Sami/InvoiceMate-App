@@ -1,0 +1,33 @@
+<svg width="680" height="680" viewBox="0 0 680 680" xmlns="http://www.w3.org/2000/svg">
+  <title>InvoiceMate App Logo</title>
+  <desc>Square app icon for InvoiceMate BY NAUMAN SAMI</desc>
+
+  <rect x="40" y="40" width="600" height="600" rx="120" fill="#1557D6"/>
+  <rect x="40" y="40" width="600" height="300" rx="120" fill="#ffffff" opacity="0.05"/>
+
+  <rect x="190" y="140" width="220" height="280" rx="18" fill="#ffffff" opacity="0.12"/>
+  <rect x="200" y="150" width="220" height="280" rx="18" fill="#ffffff" opacity="0.15"/>
+
+  <polygon points="368,150 420,150 420,202" fill="#0A3FA8" opacity="0.5"/>
+  <polygon points="368,150 368,202 420,202" fill="#ffffff" opacity="0.25"/>
+
+  <rect x="222" y="220" width="110" height="10" rx="5" fill="#ffffff" opacity="0.5"/>
+  <rect x="222" y="244" width="85"  height="10" rx="5" fill="#ffffff" opacity="0.35"/>
+  <rect x="222" y="268" width="96"  height="10" rx="5" fill="#ffffff" opacity="0.35"/>
+  <rect x="222" y="292" width="70"  height="10" rx="5" fill="#ffffff" opacity="0.25"/>
+  <rect x="222" y="316" width="80"  height="10" rx="5" fill="#ffffff" opacity="0.2"/>
+
+  <circle cx="400" cy="390" r="52" fill="#0A3FA8" opacity="0.4"/>
+  <circle cx="400" cy="390" r="44" fill="#10B981"/>
+  <polyline points="382,391 395,405 420,372" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- App name: Invoice in white, Mate in green -->
+  <text x="340" y="508" text-anchor="middle" font-family="'Helvetica Neue', Arial, sans-serif" font-size="48" font-weight="700" fill="#FFFFFF" letter-spacing="-1">
+    <tspan fill="#FFFFFF">Invoice</tspan><tspan fill="#10B981">Mate</tspan>
+  </text>
+
+  <!-- Tagline -->
+  <text x="340" y="536" text-anchor="middle" font-family="'Helvetica Neue', Arial, sans-serif" font-size="13" font-weight="400" fill="rgba(255,255,255,0.55)" letter-spacing="3">BY NAUMAN SAMI</text>
+
+  <rect x="244" y="548" width="192" height="3" rx="1.5" fill="#10B981"/>
+</svg>

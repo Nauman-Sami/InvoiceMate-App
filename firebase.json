@@ -1,0 +1,24 @@
+{
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "invoice-app-55978",
+          "appId": "1:245627860959:android:64d23d81c2f054b862366a",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "invoice-app-55978",
+          "configurations": {
+            "android": "1:245627860959:android:64d23d81c2f054b862366a"
+          }
+        }
+      }
+    }
+  },
+  "firestore": {
+    "rules": "firestore.rules"
+  }
+}
