@@ -1,7 +1,7 @@
 name: invoice_app
 description: InvoiceMate - Create and manage invoices offline & online.
 publish_to: 'none'
-version: 1.0.8+9
+version: 1.0.9+10
 
 environment:
   sdk: '>=3.0.0 <4.0.0'
@@ -47,10 +47,11 @@ dependencies:
   animate_do: ^3.3.4
   equatable: ^2.0.5
 
-  # Import from CSV / Excel
+  # Import from CSV / Excel / PDF
   file_picker: 8.0.7
   csv: ^6.0.0
   excel: ^4.0.6
+  syncfusion_flutter_pdf: ^27.1.48
 
 dev_dependencies:
   flutter_test:

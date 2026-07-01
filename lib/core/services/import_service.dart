@@ -1,7 +1,9 @@
 import 'dart:convert';
+import 'dart:typed_data';
 import 'package:csv/csv.dart';
 import 'package:excel/excel.dart' as xls;
 import 'package:file_picker/file_picker.dart';
+import 'package:syncfusion_flutter_pdf/pdf.dart' as sf;
 
 /// A parsed spreadsheet: the header names + the data rows (as strings).
 class ParsedTable {
@@ -18,7 +20,7 @@ class ImportService {
   static Future<ParsedTable?> pickAndParse() async {
     final res = await FilePicker.platform.pickFiles(
       type: FileType.custom,
-      allowedExtensions: ['csv', 'xlsx', 'xls'],
+      allowedExtensions: ['csv', 'xlsx', 'xls', 'pdf'],
       withData: true,
     );
     if (res == null || res.files.isEmpty) return null;
@@ -30,7 +32,50 @@ class ImportService {
     if (name.endsWith('.csv')) {
       return _parseCsv(utf8.decode(bytes, allowMalformed: true));
     }
+    if (name.endsWith('.pdf')) {
+      return _parsePdf(bytes);
+    }
     return _parseExcel(bytes);
+  }
+
+  /// Extracts a product/price table from a PDF (e.g. a pharmacy product list).
+  /// Each data row is expected to be: [row#] name  $amount1  $amount2  ...
+  /// The amounts become columns (Sale / Wholesale / Purchase). Because PDFs
+  /// merge name+code+unit, the "Product" column may contain the unit too.
+  static ParsedTable _parsePdf(List<int> bytes) {
+    final doc = sf.PdfDocument(inputBytes: Uint8List.fromList(bytes));
+    String text;
+    try {
+      text = sf.PdfTextExtractor(doc).extractText();
+    } finally {
+      doc.dispose();
+    }
+
+    // First pass requires a "$" before each amount (avoids misreading dosages
+    // like "0.25mg" as prices). If that finds nothing, fall back to a looser
+    // match for PDFs that print amounts without a currency symbol.
+    var result = _extractPdfRows(text, requireDollar: true);
+    if (result.$1.isEmpty) {
+      result = _extractPdfRows(text, requireDollar: false);
+    }
+    final rows = result.$1;
+    final maxAmts = result.$2;
+
+    if (rows.isEmpty) {
+      throw 'No product rows were found in this PDF. If it is not a product/price '
+          'list, please export it as CSV or Excel instead.';
+    }
+
+    final headers = <String>['No', 'Product'];
+    const amtNames = ['Sale Rate', 'Wholesale Rate', 'Purchase Rate'];
+    for (var i = 0; i < maxAmts; i++) {
+      headers.add(i < amtNames.length ? amtNames[i] : 'Amount ${i + 1}');
+    }
+    final width = headers.length;
+    final padded = rows
+        .map((r) => List<String>.generate(width, (j) => j < r.length ? r[j] : ''))
+        .toList();
+    return ParsedTable(headers, padded);
   }
 
   static ParsedTable _parseCsv(String text) {
@@ -75,6 +120,45 @@ class ImportService {
       rows.add(row);
     }
     return ParsedTable(headers, rows);
+  }
+
+  /// Scans PDF text line-by-line for "name  $a  $b ..." rows.
+  /// Returns (rows, maxAmountColumns). Each row is [seq, name, amt1, amt2 ...].
+  static (List<List<String>>, int) _extractPdfRows(String text,
+      {required bool requireDollar}) {
+    final moneyRe = requireDollar
+        ? RegExp(r'\$\s*([0-9][0-9,]*\.[0-9]{2})')
+        : RegExp(r'([0-9][0-9,]*\.[0-9]{2})');
+    final firstMoneyRe = requireDollar
+        ? RegExp(r'\$\s*[0-9][0-9,]*\.[0-9]{2}')
+        : RegExp(r'[0-9][0-9,]*\.[0-9]{2}');
+
+    final rows = <List<String>>[];
+    int maxAmts = 0;
+    int seq = 0;
+
+    for (final raw in text.split('\n')) {
+      var line = raw.trim();
+      if (line.isEmpty) continue;
+      final amts =
+          moneyRe.allMatches(line).map((m) => m.group(1)!.replaceAll(',', '')).toList();
+      if (amts.isEmpty) continue; // headers, page titles, etc.
+
+      seq++;
+      // Strip a leading sequential row number if the software printed one.
+      final numStr = seq.toString();
+      if (line.startsWith(numStr)) line = line.substring(numStr.length);
+
+      // Product name = everything before the first money amount.
+      final firstIdx = line.indexOf(firstMoneyRe);
+      var pname = firstIdx > 0 ? line.substring(0, firstIdx) : line;
+      pname = pname.replaceAll(r'$', '').trim();
+      if (pname.isEmpty) continue;
+
+      if (amts.length > maxAmts) maxAmts = amts.length;
+      rows.add(<String>[seq.toString(), pname, ...amts]);
+    }
+    return (rows, maxAmts);
   }
 
   /// Best-guess a header index for a target field, using priority keywords.
