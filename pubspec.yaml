@@ -1,7 +1,7 @@
 name: invoice_app
 description: InvoiceMate - Create and manage invoices offline & online.
 publish_to: 'none'
-version: 1.0.4+5
+version: 1.0.8+9
 
 environment:
   sdk: '>=3.0.0 <4.0.0'
@@ -47,6 +47,11 @@ dependencies:
   animate_do: ^3.3.4
   equatable: ^2.0.5
 
+  # Import from CSV / Excel
+  file_picker: 8.0.7
+  csv: ^6.0.0
+  excel: ^4.0.6
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -73,10 +78,10 @@ flutter_launcher_icons:
 
 # Native splash shown on every app launch (run: dart run flutter_native_splash:create)
 flutter_native_splash:
-  color: "#1557D6"
+  color: "#EAF1FF"
   image: assets/splash/splash.png
   android_12:
-    color: "#1557D6"
+    color: "#EAF1FF"
     image: assets/splash/splash.png
   android: true
   ios: false

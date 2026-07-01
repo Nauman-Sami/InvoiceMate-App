@@ -59,9 +59,9 @@ class _CreateInvoiceScreenState extends State<CreateInvoiceScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.transparent,
+      backgroundColor: const Color(0xFFEAF1FF),
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: const Color(0xFFEAF1FF),
         title: Text(widget.editInvoice == null ? 'New Invoice' : 'Edit Invoice'),
         actions: [
           TextButton(

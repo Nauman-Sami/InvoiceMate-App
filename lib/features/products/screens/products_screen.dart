@@ -5,6 +5,8 @@ import 'package:intl/intl.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/app_background.dart';
 import '../../../core/services/pdf_service.dart';
+import '../../../core/services/import_service.dart';
+import '../../import/screens/import_mapping_screen.dart';
 import '../controllers/product_controller.dart';
 import '../../../data/models/product_model.dart';
 
@@ -19,11 +21,16 @@ class ProductsScreen extends StatelessWidget {
     final fmt = NumberFormat('#,##0.00', 'en_US');
 
     return Scaffold(
-      backgroundColor: Colors.transparent,
+      backgroundColor: const Color(0xFFEAF1FF),
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: const Color(0xFFEAF1FF),
         title: const Text('Products & Services'),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.upload_file_outlined),
+            tooltip: 'Import from CSV/Excel',
+            onPressed: () => _import(ctrl),
+          ),
           IconButton(
             icon: const Icon(Icons.picture_as_pdf_outlined),
             tooltip: 'Download PDF',
@@ -133,6 +140,22 @@ class ProductsScreen extends StatelessWidget {
                               style: const TextStyle(fontSize: 11, color: AppTheme.warning)),
                       ],
                     ),
+                    IconButton(
+                      icon: const Icon(Icons.delete_outline, color: AppTheme.danger, size: 22),
+                      tooltip: 'Delete product',
+                      onPressed: () => Get.defaultDialog(
+                        title: 'Delete product',
+                        middleText: 'Delete "${p.name}"? This cannot be undone.',
+                        textConfirm: 'Delete',
+                        textCancel: 'Cancel',
+                        confirmTextColor: Colors.white,
+                        buttonColor: AppTheme.danger,
+                        onConfirm: () {
+                          ctrl.deleteProduct(p.id);
+                          Get.back();
+                        },
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -145,6 +168,45 @@ class ProductsScreen extends StatelessWidget {
         child: const Icon(Icons.add),
       ),
     );
+  }
+
+  Future<void> _import(ProductController ctrl) async {
+    try {
+      final table = await ImportService.pickAndParse();
+      if (table == null) return; // cancelled
+      if (table.isEmpty) {
+        Get.snackbar('Empty file', 'No rows found in that file',
+            backgroundColor: AppTheme.warning, colorText: Colors.white,
+            snackPosition: SnackPosition.BOTTOM);
+        return;
+      }
+      Get.to(() => ImportMappingScreen(
+            title: 'Products',
+            table: table,
+            fields: const [
+              ImportField('name', 'Product name',
+                  required: true,
+                  keywords: ['product name', 'item name', 'name', 'product', 'item'],
+                  avoid: ['code', 'categor', 'rate', 'price']),
+              ImportField('price', 'Sale rate / price',
+                  required: true, numeric: true,
+                  keywords: ['sale rate', 'sale', 'price', 'rate', 'mrp'],
+                  avoid: ['whole', 'purchase']),
+              ImportField('wholesale', 'Wholesale rate',
+                  numeric: true, keywords: ['whole']),
+              ImportField('unit', 'Unit', keywords: ['unit', 'uom']),
+              ImportField('code', 'Product code / SKU',
+                  keywords: ['code', 'sku', 'barcode']),
+              ImportField('description', 'Description',
+                  keywords: ['description', 'desc', 'detail']),
+            ],
+            onImport: (rows) => ctrl.importProducts(rows),
+          ));
+    } catch (e) {
+      Get.snackbar('Could not read file', '$e',
+          backgroundColor: AppTheme.danger, colorText: Colors.white,
+          snackPosition: SnackPosition.BOTTOM);
+    }
   }
 
   void _showAddProduct(BuildContext context, ProductController ctrl, [ProductModel? edit]) {

@@ -53,6 +53,39 @@ class ClientController extends GetxController {
     return client;
   }
 
+  /// Bulk-import clients from a mapped spreadsheet. Each map may contain the
+  /// keys: name, email, phone, address, company, tax. Duplicate names are
+  /// skipped. Returns how many were added.
+  Future<int> importClients(List<Map<String, String>> rows) async {
+    final existing = clients.map((c) => c.name.trim().toLowerCase()).toSet();
+    int added = 0;
+    for (final r in rows) {
+      final name = (r['name'] ?? '').trim();
+      if (name.isEmpty) continue;
+      if (existing.contains(name.toLowerCase())) continue;
+      existing.add(name.toLowerCase());
+      final company = (r['company'] ?? '').trim();
+      final tax = (r['tax'] ?? '').trim();
+      final client = ClientModel(
+        id: _uuid.v4(),
+        name: name,
+        email: (r['email'] ?? '').trim(),
+        phone: (r['phone'] ?? '').trim(),
+        address: (r['address'] ?? '').trim(),
+        companyName: company.isEmpty ? null : company,
+        taxNumber: tax.isEmpty ? null : tax,
+        createdAt: DateTime.now(),
+        syncStatus: AppConstants.syncPending,
+        userId: userId,
+      );
+      LocalDatabase.saveClient(client);
+      added++;
+    }
+    loadClients();
+    SyncService.syncToCloud(userId);
+    return added;
+  }
+
   Future<void> updateClient(ClientModel client) async {
     client.syncStatus = AppConstants.syncPending;
     LocalDatabase.saveClient(client);

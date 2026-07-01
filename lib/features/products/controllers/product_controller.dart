@@ -54,6 +54,41 @@ class ProductController extends GetxController {
     return product;
   }
 
+  /// Bulk-import products from a mapped spreadsheet. Each map may contain the
+  /// keys: name, description, price, wholesale, tax, unit, code. Duplicate
+  /// names (already in the catalog) are skipped. Returns how many were added.
+  Future<int> importProducts(List<Map<String, String>> rows) async {
+    final existing = products.map((p) => p.name.trim().toLowerCase()).toSet();
+    int added = 0;
+    for (final r in rows) {
+      final name = (r['name'] ?? '').trim();
+      if (name.isEmpty) continue;
+      if (existing.contains(name.toLowerCase())) continue;
+      existing.add(name.toLowerCase());
+      final unit = (r['unit'] ?? '').trim();
+      final code = (r['code'] ?? '').trim();
+      final ws = (r['wholesale'] ?? '').trim();
+      final product = ProductModel(
+        id: _uuid.v4(),
+        name: name,
+        description: (r['description'] ?? '').trim(),
+        price: double.tryParse(r['price'] ?? '') ?? 0,
+        taxPercent: double.tryParse(r['tax'] ?? '') ?? 0,
+        unit: unit.isEmpty ? 'pcs' : unit,
+        sku: code.isEmpty ? null : code,
+        createdAt: DateTime.now(),
+        syncStatus: AppConstants.syncPending,
+        userId: userId,
+        wholesalePrice: ws.isEmpty ? null : double.tryParse(ws),
+      );
+      LocalDatabase.saveProduct(product);
+      added++;
+    }
+    loadProducts();
+    SyncService.syncToCloud(userId);
+    return added;
+  }
+
   Future<void> updateProduct(ProductModel product) async {
     product.syncStatus = AppConstants.syncPending;
     LocalDatabase.saveProduct(product);

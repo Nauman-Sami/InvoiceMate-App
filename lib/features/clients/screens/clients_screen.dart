@@ -4,6 +4,8 @@ import 'package:get/get.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/app_background.dart';
 import '../../../core/services/pdf_service.dart';
+import '../../../core/services/import_service.dart';
+import '../../import/screens/import_mapping_screen.dart';
 import '../controllers/client_controller.dart';
 import '../../../data/models/client_model.dart';
 
@@ -15,11 +17,16 @@ class ClientsScreen extends StatelessWidget {
     final ctrl = Get.find<ClientController>();
 
     return Scaffold(
-      backgroundColor: Colors.transparent,
+      backgroundColor: const Color(0xFFEAF1FF),
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: const Color(0xFFEAF1FF),
         title: const Text('Clients'),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.upload_file_outlined),
+            tooltip: 'Import from CSV/Excel',
+            onPressed: () => _import(ctrl),
+          ),
           IconButton(
             icon: const Icon(Icons.picture_as_pdf_outlined),
             tooltip: 'Download PDF',
@@ -97,6 +104,43 @@ class ClientsScreen extends StatelessWidget {
         child: const Icon(Icons.person_add_outlined),
       ),
     );
+  }
+
+  Future<void> _import(ClientController ctrl) async {
+    try {
+      final table = await ImportService.pickAndParse();
+      if (table == null) return; // cancelled
+      if (table.isEmpty) {
+        Get.snackbar('Empty file', 'No rows found in that file',
+            backgroundColor: AppTheme.warning, colorText: Colors.white,
+            snackPosition: SnackPosition.BOTTOM);
+        return;
+      }
+      Get.to(() => ImportMappingScreen(
+            title: 'Clients',
+            table: table,
+            fields: const [
+              ImportField('name', 'Client name',
+                  required: true,
+                  keywords: ['client name', 'customer name', 'name', 'client', 'customer', 'party'],
+                  avoid: ['company', 'tax', 'email', 'phone']),
+              ImportField('email', 'Email', keywords: ['email', 'e-mail', 'mail']),
+              ImportField('phone', 'Phone',
+                  keywords: ['phone', 'mobile', 'contact', 'cell', 'tel']),
+              ImportField('address', 'Address',
+                  keywords: ['address', 'location', 'city']),
+              ImportField('company', 'Company',
+                  keywords: ['company', 'business', 'firm', 'shop']),
+              ImportField('tax', 'Tax number',
+                  keywords: ['tax', 'ntn', 'gst', 'strn', 'vat']),
+            ],
+            onImport: (rows) => ctrl.importClients(rows),
+          ));
+    } catch (e) {
+      Get.snackbar('Could not read file', '$e',
+          backgroundColor: AppTheme.danger, colorText: Colors.white,
+          snackPosition: SnackPosition.BOTTOM);
+    }
   }
 
   void _showAddClient(BuildContext context, ClientController ctrl, [ClientModel? edit]) {
@@ -220,8 +264,20 @@ class _ClientTile extends StatelessWidget {
           ],
         ),
         trailing: IconButton(
-          icon: const Icon(Icons.edit_outlined, size: 20),
-          onPressed: () {},
+          icon: const Icon(Icons.delete_outline, color: AppTheme.danger, size: 22),
+          tooltip: 'Delete client',
+          onPressed: () => Get.defaultDialog(
+            title: 'Delete client',
+            middleText: 'Delete "${client.name}"? This cannot be undone.',
+            textConfirm: 'Delete',
+            textCancel: 'Cancel',
+            confirmTextColor: Colors.white,
+            buttonColor: AppTheme.danger,
+            onConfirm: () {
+              ctrl.deleteClient(client.id);
+              Get.back();
+            },
+          ),
         ),
         isThreeLine: client.companyName != null,
       ),

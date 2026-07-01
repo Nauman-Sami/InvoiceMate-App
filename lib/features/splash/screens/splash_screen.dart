@@ -29,26 +29,35 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF1557D6),
-      body: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Image.asset(
-              'assets/splash/splash.png',
-              width: 260,
-              height: 260,
-            ),
-            const SizedBox(height: 28),
-            const SizedBox(
-              width: 26,
-              height: 26,
-              child: CircularProgressIndicator(
-                color: Colors.white,
-                strokeWidth: 2.5,
+      backgroundColor: const Color(0xFFEAF1FF), // light
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [Color(0xFFEAF1FF), Color(0xFFF8FAFC)],
+          ),
+        ),
+        child: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Image.asset(
+                'assets/splash/splash.png',
+                width: 260,
+                height: 260,
               ),
-            ),
-          ],
+              const SizedBox(height: 28),
+              const SizedBox(
+                width: 26,
+                height: 26,
+                child: CircularProgressIndicator(
+                  color: Color(0xFF2563EB),
+                  strokeWidth: 2.5,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

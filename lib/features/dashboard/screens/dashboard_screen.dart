@@ -20,9 +20,9 @@ class DashboardScreen extends StatelessWidget {
     final fmt = NumberFormat('#,##0.00', 'en_US');
 
     return Scaffold(
-      backgroundColor: Colors.transparent,
+      backgroundColor: const Color(0xFFEAF1FF),
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: const Color(0xFFEAF1FF),
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
