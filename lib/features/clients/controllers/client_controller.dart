@@ -23,7 +23,7 @@ class ClientController extends GetxController {
 
   void loadClients() {
     final all = LocalDatabase.getClientsForUser(userId);
-    all.sort((a, b) => a.name.compareTo(b.name));
+    all.sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
     clients.assignAll(all);
   }
 

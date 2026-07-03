@@ -42,6 +42,7 @@ class _CreateInvoiceScreenState extends State<CreateInvoiceScreen> {
       final inv = widget.editInvoice!;
       _selectedClient = _clientCtrl.getClientById(inv.clientId);
       _items.addAll(inv.items);
+      _sortItems();
       _issueDate = inv.issueDate;
       _dueDate = inv.dueDate;
       _status = inv.status;
@@ -241,13 +242,27 @@ class _CreateInvoiceScreenState extends State<CreateInvoiceScreen> {
               children: [
                 Row(
                   children: [
+                    Text('${i + 1}. ',
+                        style: const TextStyle(
+                            fontWeight: FontWeight.w700, color: AppTheme.textSecondary)),
                     Expanded(child: Text(item.productName,
                         style: const TextStyle(fontWeight: FontWeight.w600))),
                     IconButton(
+                      icon: const Icon(Icons.edit_outlined, color: AppTheme.primary, size: 20),
+                      tooltip: 'Edit item',
+                      onPressed: () => _editItem(i),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                      visualDensity: VisualDensity.compact,
+                    ),
+                    const SizedBox(width: 12),
+                    IconButton(
                       icon: const Icon(Icons.delete_outline, color: AppTheme.danger, size: 20),
+                      tooltip: 'Remove item',
                       onPressed: () => setState(() => _items.removeAt(i)),
                       padding: EdgeInsets.zero,
                       constraints: const BoxConstraints(),
+                      visualDensity: VisualDensity.compact,
                     ),
                   ],
                 ),
@@ -381,9 +396,30 @@ class _CreateInvoiceScreenState extends State<CreateInvoiceScreen> {
       _AddProductDialog(
         productController: _prodCtrl,
         currency: _currency,
-        onAdd: (item) => setState(() => _items.add(item)),
+        onAdd: (item) => setState(() {
+          _items.add(item);
+          _sortItems();
+        }),
       ),
       barrierDismissible: false, // stays open until the user taps Close
+    );
+  }
+
+  void _sortItems() {
+    _items.sort((a, b) =>
+        a.productName.toLowerCase().compareTo(b.productName.toLowerCase()));
+  }
+
+  void _editItem(int index) {
+    Get.dialog(
+      _EditItemDialog(
+        item: _items[index],
+        currency: _currency,
+        onSave: (updated) => setState(() {
+          _items[index] = updated;
+          _sortItems();
+        }),
+      ),
     );
   }
 
@@ -426,6 +462,119 @@ class _CreateInvoiceScreenState extends State<CreateInvoiceScreen> {
     Get.back();
     Get.snackbar('Success', widget.editInvoice == null ? 'Invoice created!' : 'Invoice updated!',
         backgroundColor: AppTheme.accent, colorText: Colors.white);
+  }
+}
+
+/// Small dialog to edit one already-added invoice item (name/qty/rate/tax/unit).
+class _EditItemDialog extends StatefulWidget {
+  final InvoiceItem item;
+  final String currency;
+  final Function(InvoiceItem) onSave;
+  const _EditItemDialog({
+    required this.item,
+    required this.currency,
+    required this.onSave,
+  });
+
+  @override
+  State<_EditItemDialog> createState() => _EditItemDialogState();
+}
+
+class _EditItemDialogState extends State<_EditItemDialog> {
+  static const List<String> _units = ['pcs', 'kg', 'g', 'l', 'ml', 'hr', 'day', 'month', 'service'];
+  late final TextEditingController _nameCtrl;
+  late final TextEditingController _qtyCtrl;
+  late final TextEditingController _rateCtrl;
+  late final TextEditingController _taxCtrl;
+  late final TextEditingController _descCtrl;
+  late String _unit;
+
+  @override
+  void initState() {
+    super.initState();
+    final it = widget.item;
+    _nameCtrl = TextEditingController(text: it.productName);
+    _qtyCtrl = TextEditingController(text: it.quantity.toString());
+    _rateCtrl = TextEditingController(text: it.unitPrice.toString());
+    _taxCtrl = TextEditingController(text: it.taxPercent.toString());
+    _descCtrl = TextEditingController(text: it.description);
+    _unit = _units.contains(it.unit) ? it.unit : 'pcs';
+  }
+
+  @override
+  void dispose() {
+    _nameCtrl.dispose();
+    _qtyCtrl.dispose();
+    _rateCtrl.dispose();
+    _taxCtrl.dispose();
+    _descCtrl.dispose();
+    super.dispose();
+  }
+
+  void _save() {
+    final name = _nameCtrl.text.trim();
+    if (name.isEmpty || _rateCtrl.text.trim().isEmpty) {
+      Get.snackbar('Missing info', 'Enter a name and rate',
+          backgroundColor: AppTheme.danger, colorText: Colors.white,
+          snackPosition: SnackPosition.BOTTOM);
+      return;
+    }
+    widget.onSave(InvoiceItem(
+      productId: widget.item.productId,
+      productName: name,
+      description: _descCtrl.text.trim(),
+      quantity: double.tryParse(_qtyCtrl.text) ?? 1,
+      unitPrice: double.tryParse(_rateCtrl.text) ?? 0,
+      taxPercent: double.tryParse(_taxCtrl.text) ?? 0,
+      unit: _unit,
+    ));
+    Get.back();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Edit Item'),
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(controller: _nameCtrl,
+                decoration: const InputDecoration(labelText: 'Item name')),
+            const SizedBox(height: 10),
+            TextField(controller: _descCtrl,
+                decoration: const InputDecoration(labelText: 'Description')),
+            const SizedBox(height: 10),
+            Row(children: [
+              Expanded(child: TextField(controller: _qtyCtrl,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(labelText: 'Qty'))),
+              const SizedBox(width: 10),
+              Expanded(child: TextField(controller: _rateCtrl,
+                  keyboardType: TextInputType.number,
+                  decoration: InputDecoration(labelText: 'Rate (${widget.currency})'))),
+            ]),
+            const SizedBox(height: 10),
+            Row(children: [
+              Expanded(child: TextField(controller: _taxCtrl,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(labelText: 'Tax %', suffixText: '%'))),
+              const SizedBox(width: 10),
+              Expanded(child: DropdownButtonFormField<String>(
+                value: _unit,
+                decoration: const InputDecoration(labelText: 'Unit'),
+                items: _units.map((u) => DropdownMenuItem(value: u, child: Text(u))).toList(),
+                onChanged: (v) => setState(() => _unit = v ?? 'pcs'),
+              )),
+            ]),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(onPressed: () => Get.back(), child: const Text('Cancel')),
+        ElevatedButton(onPressed: _save, child: const Text('Save')),
+      ],
+    );
   }
 }
 

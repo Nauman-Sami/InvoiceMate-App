@@ -3,6 +3,7 @@ import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/count_header.dart';
 import '../controllers/invoice_controller.dart';
 
 class InvoiceListScreen extends StatelessWidget {
@@ -74,13 +75,17 @@ class InvoiceListScreen extends StatelessWidget {
             ),
           );
         }
-        return ListView.builder(
-          padding: const EdgeInsets.all(16),
-          itemCount: list.length,
-          itemBuilder: (_, i) {
-            final inv = list[i];
-            final statusColor = AppTheme.getStatusColor(inv.status);
-            return Slidable(
+        return Column(
+          children: [
+            CountHeader(label: 'Total Invoices', count: ctrl.invoices.length),
+            Expanded(
+              child: ListView.builder(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                itemCount: list.length,
+                itemBuilder: (_, i) {
+                  final inv = list[i];
+                  final statusColor = AppTheme.getStatusColor(inv.status);
+                  return Slidable(
               endActionPane: ActionPane(
                 motion: const DrawerMotion(),
                 children: [
@@ -111,6 +116,19 @@ class InvoiceListScreen extends StatelessWidget {
                     children: [
                       Row(
                         children: [
+                          Container(
+                            width: 28,
+                            height: 28,
+                            alignment: Alignment.center,
+                            margin: const EdgeInsets.only(right: 10),
+                            decoration: BoxDecoration(
+                              color: AppTheme.primary.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text('${i + 1}',
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.w700, fontSize: 12, color: AppTheme.primary)),
+                          ),
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -176,7 +194,10 @@ class InvoiceListScreen extends StatelessWidget {
                 ),
               ),
             );
-          },
+                },
+              ),
+            ),
+          ],
         );
       }),
       floatingActionButton: FloatingActionButton(

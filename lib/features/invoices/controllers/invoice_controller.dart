@@ -110,6 +110,33 @@ class InvoiceController extends GetxController {
   int get draftCount =>
       invoices.where((i) => i.status == AppConstants.statusDraft).length;
 
+  /// Grand total of invoices issued today (excluding cancelled).
+  double get todaysSales {
+    final now = DateTime.now();
+    bool sameDay(DateTime d) =>
+        d.year == now.year && d.month == now.month && d.day == now.day;
+    return invoices
+        .where((i) => i.status != AppConstants.statusCancelled && sameDay(i.issueDate))
+        .fold(0.0, (s, i) => s + i.grandTotal);
+  }
+
+  /// Daily sales totals grouped by issue date (excluding cancelled),
+  /// most recent day first.
+  List<MapEntry<DateTime, double>> get salesByDay {
+    final totals = <String, double>{};
+    final dates = <String, DateTime>{};
+    for (final i in invoices) {
+      if (i.status == AppConstants.statusCancelled) continue;
+      final d = DateTime(i.issueDate.year, i.issueDate.month, i.issueDate.day);
+      final key = '${d.year}-${d.month}-${d.day}';
+      totals[key] = (totals[key] ?? 0) + i.grandTotal;
+      dates[key] = d;
+    }
+    final list = totals.entries.map((e) => MapEntry(dates[e.key]!, e.value)).toList();
+    list.sort((a, b) => b.key.compareTo(a.key));
+    return list;
+  }
+
   String generateInvoiceNumber() {
     final profile = LocalDatabase.getProfile(userId);
     final prefix = profile?.invoicePrefix ?? 'INV-';

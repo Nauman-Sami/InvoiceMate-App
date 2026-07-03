@@ -22,7 +22,7 @@ class ProductController extends GetxController {
 
   void loadProducts() {
     final all = LocalDatabase.getProductsForUser(userId);
-    all.sort((a, b) => a.name.compareTo(b.name));
+    all.sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
     products.assignAll(all);
   }
 

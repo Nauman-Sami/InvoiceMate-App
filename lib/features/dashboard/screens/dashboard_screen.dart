@@ -101,6 +101,94 @@ class DashboardScreen extends StatelessWidget {
                     ],
                   ),
                 ),
+                const SizedBox(height: 12),
+                // Today's sales
+                FadeInDown(
+                  delay: const Duration(milliseconds: 150),
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [AppTheme.primary, AppTheme.primaryDark],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.18),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: const Icon(Icons.today_rounded, color: Colors.white),
+                        ),
+                        const SizedBox(width: 14),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              "Today's Sales  •  ${DateFormat('dd MMM yyyy').format(DateTime.now())}",
+                              style: TextStyle(color: Colors.white.withOpacity(0.85), fontSize: 12),
+                            ),
+                            const SizedBox(height: 3),
+                            Text('$currency ${fmt.format(invoiceCtrl.todaysSales)}',
+                                style: const TextStyle(
+                                    color: Colors.white, fontSize: 22, fontWeight: FontWeight.w800)),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                // Daily Sales breakdown
+                Builder(builder: (_) {
+                  final days = invoiceCtrl.salesByDay.take(7).toList();
+                  if (days.isEmpty) return const SizedBox.shrink();
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('Daily Sales',
+                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700,
+                              color: AppTheme.textPrimary)),
+                      const SizedBox(height: 8),
+                      Container(
+                        decoration: BoxDecoration(
+                          color: AppTheme.cardBg,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: AppTheme.divider),
+                        ),
+                        child: Column(
+                          children: [
+                            for (var k = 0; k < days.length; k++) ...[
+                              if (k > 0) const Divider(height: 1),
+                              Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+                                child: Row(
+                                  children: [
+                                    const Icon(Icons.calendar_today_outlined,
+                                        size: 14, color: AppTheme.textSecondary),
+                                    const SizedBox(width: 10),
+                                    Text(DateFormat('dd MMM yyyy').format(days[k].key),
+                                        style: const TextStyle(fontSize: 13)),
+                                    const Spacer(),
+                                    Text('$currency ${fmt.format(days[k].value)}',
+                                        style: const TextStyle(
+                                            fontWeight: FontWeight.w700, color: AppTheme.textPrimary)),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                    ],
+                  );
+                }),
                 const SizedBox(height: 24),
                 // Quick Actions
                 FadeInUp(

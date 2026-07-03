@@ -3,6 +3,7 @@ import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:get/get.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/app_background.dart';
+import '../../../core/widgets/count_header.dart';
 import '../../../core/services/pdf_service.dart';
 import '../../../core/services/import_service.dart';
 import '../../import/screens/import_mapping_screen.dart';
@@ -72,31 +73,43 @@ class ClientsScreen extends StatelessWidget {
             ),
           );
         }
-        return ListView.builder(
-          padding: const EdgeInsets.all(16),
-          itemCount: ctrl.clients.length,
-          itemBuilder: (_, i) {
-            final c = ctrl.clients[i];
-            return Slidable(
-              endActionPane: ActionPane(
-                motion: const DrawerMotion(),
-                children: [
-                  SlidableAction(
-                    onPressed: (_) => ctrl.deleteClient(c.id),
-                    backgroundColor: AppTheme.danger,
-                    foregroundColor: Colors.white,
-                    icon: Icons.delete_outline,
-                    label: 'Delete',
-                    borderRadius: const BorderRadius.only(
-                      topLeft: Radius.circular(12),
-                      bottomLeft: Radius.circular(12),
+        return Column(
+          children: [
+            CountHeader(label: 'Total Clients', count: ctrl.clients.length),
+            Expanded(
+              child: ListView.builder(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                itemCount: ctrl.clients.length,
+                itemBuilder: (_, i) {
+                  final c = ctrl.clients[i];
+                  return Slidable(
+                    endActionPane: ActionPane(
+                      motion: const DrawerMotion(),
+                      children: [
+                        SlidableAction(
+                          onPressed: (_) => ctrl.deleteClient(c.id),
+                          backgroundColor: AppTheme.danger,
+                          foregroundColor: Colors.white,
+                          icon: Icons.delete_outline,
+                          label: 'Delete',
+                          borderRadius: const BorderRadius.only(
+                            topLeft: Radius.circular(12),
+                            bottomLeft: Radius.circular(12),
+                          ),
+                        ),
+                      ],
                     ),
-                  ),
-                ],
+                    child: _ClientTile(
+                      client: c,
+                      ctrl: ctrl,
+                      serial: i + 1,
+                      onEdit: () => _showAddClient(context, ctrl, c),
+                    ),
+                  );
+                },
               ),
-              child: _ClientTile(client: c, ctrl: ctrl),
-            );
-          },
+            ),
+          ],
         );
       })),
       floatingActionButton: FloatingActionButton(
@@ -237,7 +250,14 @@ class ClientsScreen extends StatelessWidget {
 class _ClientTile extends StatelessWidget {
   final ClientModel client;
   final ClientController ctrl;
-  const _ClientTile({required this.client, required this.ctrl});
+  final int serial;
+  final VoidCallback onEdit;
+  const _ClientTile({
+    required this.client,
+    required this.ctrl,
+    required this.serial,
+    required this.onEdit,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -249,10 +269,23 @@ class _ClientTile extends StatelessWidget {
         border: Border.all(color: AppTheme.divider),
       ),
       child: ListTile(
-        leading: CircleAvatar(
-          backgroundColor: AppTheme.primary.withOpacity(0.1),
-          child: Text(client.name[0].toUpperCase(),
-              style: const TextStyle(color: AppTheme.primary, fontWeight: FontWeight.bold)),
+        leading: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SizedBox(
+              width: 22,
+              child: Text('$serial',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                      color: AppTheme.textSecondary, fontWeight: FontWeight.w700, fontSize: 13)),
+            ),
+            const SizedBox(width: 4),
+            CircleAvatar(
+              backgroundColor: AppTheme.primary.withOpacity(0.1),
+              child: Text(client.name[0].toUpperCase(),
+                  style: const TextStyle(color: AppTheme.primary, fontWeight: FontWeight.bold)),
+            ),
+          ],
         ),
         title: Text(client.name, style: const TextStyle(fontWeight: FontWeight.w600)),
         subtitle: Column(
@@ -263,21 +296,31 @@ class _ClientTile extends StatelessWidget {
               Text(client.companyName!, style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
           ],
         ),
-        trailing: IconButton(
-          icon: const Icon(Icons.delete_outline, color: AppTheme.danger, size: 22),
-          tooltip: 'Delete client',
-          onPressed: () => Get.defaultDialog(
-            title: 'Delete client',
-            middleText: 'Delete "${client.name}"? This cannot be undone.',
-            textConfirm: 'Delete',
-            textCancel: 'Cancel',
-            confirmTextColor: Colors.white,
-            buttonColor: AppTheme.danger,
-            onConfirm: () {
-              ctrl.deleteClient(client.id);
-              Get.back();
-            },
-          ),
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            IconButton(
+              icon: const Icon(Icons.edit_outlined, color: AppTheme.primary, size: 20),
+              tooltip: 'Edit client',
+              onPressed: onEdit,
+            ),
+            IconButton(
+              icon: const Icon(Icons.delete_outline, color: AppTheme.danger, size: 20),
+              tooltip: 'Delete client',
+              onPressed: () => Get.defaultDialog(
+                title: 'Delete client',
+                middleText: 'Delete "${client.name}"? This cannot be undone.',
+                textConfirm: 'Delete',
+                textCancel: 'Cancel',
+                confirmTextColor: Colors.white,
+                buttonColor: AppTheme.danger,
+                onConfirm: () {
+                  ctrl.deleteClient(client.id);
+                  Get.back();
+                },
+              ),
+            ),
+          ],
         ),
         isThreeLine: client.companyName != null,
       ),

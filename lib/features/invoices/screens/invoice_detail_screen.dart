@@ -18,6 +18,9 @@ class InvoiceDetailScreen extends StatelessWidget {
     final auth = Get.find<AuthController>();
     final fmt = NumberFormat('#,##0.00', 'en_US');
     final profile = LocalDatabase.getProfile(auth.userId!);
+    final sortedItems = [...invoice.items]
+      ..sort((a, b) =>
+          a.productName.toLowerCase().compareTo(b.productName.toLowerCase()));
 
     final statusColor = AppTheme.getStatusColor(invoice.status);
 
@@ -182,13 +185,18 @@ class InvoiceDetailScreen extends StatelessWidget {
               title: 'Items (${invoice.items.length})',
               child: Column(
                 children: [
-                  ...invoice.items.map((item) => Padding(
+                  ...sortedItems.asMap().entries.map((e) {
+                    final item = e.value;
+                    return Padding(
                     padding: const EdgeInsets.only(bottom: 10),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Row(
                           children: [
+                            Text('${e.key + 1}. ',
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.w700, color: AppTheme.textSecondary)),
                             Expanded(child: Text(item.productName,
                                 style: const TextStyle(fontWeight: FontWeight.w600))),
                             Text('${invoice.currency} ${fmt.format(item.total)}',
@@ -206,7 +214,8 @@ class InvoiceDetailScreen extends StatelessWidget {
                         ),
                       ],
                     ),
-                  )),
+                  );
+                  }),
                   const Divider(),
                   _InfoRow('Subtotal', '${invoice.currency} ${fmt.format(invoice.subtotal)}'),
                   if (invoice.totalTax > 0)
